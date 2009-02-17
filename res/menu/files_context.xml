@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+  <item android:id="@+id/file_context_menu_cut" android:title="Cut"/>
+  <item android:id="@+id/file_context_menu_copy" android:title="Copy"/>
+  <separator/>
+  <item android:id="@+id/file_context_menu_rename" android:title="Rename"/>
+  <item android:id="@+id/file_context_menu_delete" android:title="Delete"/>
+  <separator/>
+  <item android:id="@+id/file_context_menu_properties" android:title="Properties"/>
+</menu>

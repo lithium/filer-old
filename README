@@ -1,0 +1,6 @@
+File system browser
+
+Manages Extension -> Mimetype database.
+Handle VIEW/PICK intents on file:// (directories or files)
+Create shortcuts of EDIT/VIEW intents on any file:// 
+
