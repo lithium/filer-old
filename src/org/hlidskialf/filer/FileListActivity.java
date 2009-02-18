@@ -8,6 +8,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 import android.view.View;
+import android.view.Menu;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 import android.view.ContextMenu;
@@ -41,6 +42,7 @@ public class FileListActivity extends ListActivity
     };
     private File pCurDir;
     private List<String> pCurFiles;
+    private File pYanked = null;
     private final File pRootFile = new File(Environment.getExternalStorageDirectory().toString());
     private boolean pIgnoreNextClick = false;
     private boolean pCreatingShortcut = false;
@@ -162,6 +164,9 @@ public class FileListActivity extends ListActivity
             txt.setText("text/*");
             txt = (TextView)ret.findViewById(R.id.row_size);
             txt.setText(String.valueOf(f.length()));
+
+            txt = (TextView)ret.findViewById(R.id.row_mtime);
+            txt.setText(String.valueOf(f.lastModified()));
           }
 
           return ret;
@@ -235,6 +240,27 @@ public class FileListActivity extends ListActivity
     }
 
     @Override
+    public boolean onCreateOptionsMenu(Menu menu)
+    {
+      super.onCreateOptionsMenu(menu);
+      getMenuInflater().inflate(R.menu.options, menu);
+
+      MenuItem mipaste = menu.findItem(R.id.options_menu_paste);
+      MenuItem midelete = menu.findItem(R.id.options_menu_delete);
+
+      if (pYanked == null) {
+        mipaste.setVisible(false);
+        midelete.setVisible(false);
+      }
+      else {
+        mipaste.setTitle("Paste "+pYanked.getName()+" here");
+        midelete.setTitle("Delete "+pYanked.getName()+" forever");
+      }
+
+      return true;
+    }
+
+    @Override
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo)
     {
       super.onCreateContextMenu(menu, v, menuInfo);
@@ -268,8 +294,6 @@ public class FileListActivity extends ListActivity
 
       switch (item.getItemId()) {
         case R.id.file_context_menu_rename:
-          return true;
-        case R.id.file_context_menu_delete:
           return true;
       }
       return super.onContextItemSelected(item);
