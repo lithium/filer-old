@@ -17,6 +17,12 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.net.Uri;
 
+import java.util.GregorianCalendar;
+import java.util.Calendar;
+import java.util.Date;
+import java.text.SimpleDateFormat;
+import java.text.DecimalFormat;
+
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
 import java.io.File;
@@ -35,6 +41,9 @@ import android.content.IntentFilter;
 
 public class FileListActivity extends ListActivity 
 {
+    private final DecimalFormat pNumFmt  = new DecimalFormat();
+    private final SimpleDateFormat pDateFmt_time = new SimpleDateFormat("MMM dd HH:mm");
+    private final SimpleDateFormat pDateFmt_year  = new SimpleDateFormat("MMM dd yyyy");
   
     private BroadcastReceiver pReceiver = new BroadcastReceiver() {
       @Override
@@ -162,11 +171,12 @@ public class FileListActivity extends ListActivity
           else {
             txt = (TextView)ret.findViewById(R.id.row_type);
             txt.setText("text/*");
+
             txt = (TextView)ret.findViewById(R.id.row_size);
-            txt.setText(String.valueOf(f.length()));
+            txt.setText( format_size(f.length()) );
 
             txt = (TextView)ret.findViewById(R.id.row_mtime);
-            txt.setText(String.valueOf(f.lastModified()));
+            txt.setText( format_date(f.lastModified()) );
           }
 
           return ret;
@@ -300,4 +310,26 @@ public class FileListActivity extends ListActivity
 
     }
 
+
+    private String format_size(long size)
+    {
+      String ret;
+      if (size > 1024*1024*1024) ret = pNumFmt.format(size / 1024*1024*1024) + "G";
+      else if (size > 1024*1024) ret = pNumFmt.format(size / 1024*1024) + "M";
+      else if (size > 1024) ret = pNumFmt.format(size / 1024) + "k";
+      else ret = pNumFmt.format(size) + "b";
+      return ret;
+    }
+    private String format_date(long when)
+    {
+      Date last = new Date(when);
+      GregorianCalendar now = new GregorianCalendar();
+      GregorianCalendar then = new GregorianCalendar();
+      then.setTime(last);
+
+      if (now.get(Calendar.YEAR) == then.get(Calendar.YEAR))
+        return pDateFmt_time.format(last);
+      else
+        return pDateFmt_year.format(last);
+    }
 }
