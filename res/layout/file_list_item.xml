@@ -2,13 +2,13 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/row"
     android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
+    android:layout_height="32px"
     >
   <TextView 
     android:id="@+id/row_text"
     android:layout_width="wrap_content"
-    android:layout_height="32px"
-    android:gravity="left|center_vertical"
+    android:layout_height="wrap_content"
+    android:gravity="left"
     />
   <ImageView
     android:id="@+id/row_icon"
@@ -18,4 +18,22 @@
     android:paddingTop="6px"
     android:paddingRight="4px"
   />
+  <RelativeLayout
+    android:layout_width="fill_parent"
+    android:layout_height="8sp"
+    android:textSize="8sp"
+    android:layout_alignParentBottom="true">
+
+    <TextView android:id="@+id/row_size" 
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_alignParentLeft="true"
+    />
+    <TextView android:id="@+id/row_type" 
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_alignParentRight="true"
+    />
+
+  </RelativeLayout>
 </RelativeLayout>

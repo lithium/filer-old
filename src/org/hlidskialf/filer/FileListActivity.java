@@ -6,6 +6,7 @@ import android.widget.ArrayAdapter;
 import android.widget.TextView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 import android.view.View;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
@@ -42,6 +43,7 @@ public class FileListActivity extends ListActivity
     private List<String> pCurFiles;
     private final File pRootFile = new File(Environment.getExternalStorageDirectory().toString());
     private boolean pIgnoreNextClick = false;
+    private boolean pCreatingShortcut = false;
 
     /** Called when the activity is first created. */
     @Override
@@ -49,9 +51,30 @@ public class FileListActivity extends ListActivity
     {
       super.onCreate(savedInstanceState);
       setContentView(R.layout.filer);
-      registerForContextMenu(getListView());  
+
+      Intent i = getIntent();
+
+      pCreatingShortcut = Intent.ACTION_CREATE_SHORTCUT.equals(i.getAction());
+
+      if (pCreatingShortcut) {
+        Toast t = Toast.makeText(this, "Longclick to create a shortcut", Toast.LENGTH_LONG);
+        t.show();
+      }
 
       pCurDir = pRootFile;
+
+      Uri uri = i.getData();
+      if (uri != null) {
+        File f = new File(uri.getPath());
+        if (f.isDirectory())
+          pCurDir = f;
+        else { // file viewer
+          Log.v("Filer", "view file");
+          finish();
+        }
+      }
+
+      registerForContextMenu(getListView());  
     }
 
     @Override
@@ -127,12 +150,18 @@ public class FileListActivity extends ListActivity
           TextView txt = (TextView)ret.findViewById(R.id.row_text);
           txt.setText(name);
 
-          ImageView img = (ImageView)ret.findViewById(R.id.row_icon);
+          File f = new File(pCurDir, name);
 
-          if (new File(pCurDir, name).isDirectory()) {
+          if (f.isDirectory()) {
+            ImageView img = (ImageView)ret.findViewById(R.id.row_icon);
             img.setImageResource(android.R.drawable.ic_menu_more);
+
           }
           else {
+            txt = (TextView)ret.findViewById(R.id.row_type);
+            txt.setText("text/*");
+            txt = (TextView)ret.findViewById(R.id.row_size);
+            txt.setText(String.valueOf(f.length()));
           }
 
           return ret;
@@ -147,6 +176,8 @@ public class FileListActivity extends ListActivity
     @Override
     protected void onListItemClick(ListView l, View v, int position, long id) 
     {
+  
+
       if (pIgnoreNextClick) {
         pIgnoreNextClick = false;
         return;
@@ -154,28 +185,77 @@ public class FileListActivity extends ListActivity
       super.onListItemClick(l,v,position,id);
 
       File f = new File(pCurDir, (String)pCurFiles.get(position));
+
       if (f.isDirectory()) {
         fillData(f);
       }
       else {
-        Intent i = new Intent(Intent.ACTION_EDIT, Uri.fromFile(f), this, EdActivity.class);
-        startActivity(i);
+        if (pCreatingShortcut) {
+          create_shortcut(f);
+        }
+        else {
+
+          try {
+            Intent i = new Intent(Intent.ACTION_VIEW);
+            i.setDataAndType(Uri.fromFile(f), "text/*");
+            startActivity(i);
+          } catch (android.content.ActivityNotFoundException ex) { }
+
+        }
       }
+    }
+
+    private void create_shortcut(File f)
+    {
+      int draw;
+      String type;
+      String action = Intent.ACTION_VIEW;
+
+      if (f.isDirectory()) {
+        type = "text/directory";
+        action = Intent.ACTION_RUN;
+        draw = R.drawable.mime_folder;
+      }
+      else {
+        type = "text/*";
+        draw = R.drawable.mime_generic;
+      }
+
+      Intent.ShortcutIconResource icon = Intent.ShortcutIconResource.fromContext(this, draw);
+
+      Intent i = new Intent(action);
+      i.setDataAndType(Uri.fromFile(f), type);
+
+      Intent short_i = new Intent();
+      short_i.putExtra(Intent.EXTRA_SHORTCUT_INTENT, i);
+      short_i.putExtra(Intent.EXTRA_SHORTCUT_NAME, f.getName());
+      short_i.putExtra(Intent.EXTRA_SHORTCUT_ICON_RESOURCE, icon);
+      setResult(RESULT_OK, short_i);
+      finish();
     }
 
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo)
     {
       super.onCreateContextMenu(menu, v, menuInfo);
-
       AdapterContextMenuInfo info = (AdapterContextMenuInfo)menuInfo;
-      if (pCurFiles.get(0).equals("..")) {
-        pIgnoreNextClick = true;
-        fillData(pRootFile);
-        return;
-      }
 
-      getMenuInflater().inflate(R.menu.files_context, menu);
+
+      if (pCreatingShortcut) {
+        File f = new File(pCurDir, pCurFiles.get(info.position));
+        create_shortcut(f);
+        return;
+
+      } else {
+
+        if (pCurFiles.get(info.position).equals("..")) {
+          pIgnoreNextClick = true;
+          fillData(pRootFile);
+          return;
+        }
+        getMenuInflater().inflate(R.menu.files_context, menu);
+
+      }
     }
 
 
@@ -183,9 +263,9 @@ public class FileListActivity extends ListActivity
     public boolean onContextItemSelected(MenuItem item)
     {
       String name = pCurFiles.get(item.getOrder());
-      Log.v("Ed", name);
 
       File f = new File(pCurDir, name);
+
       switch (item.getItemId()) {
         case R.id.file_context_menu_rename:
           return true;
@@ -193,6 +273,7 @@ public class FileListActivity extends ListActivity
           return true;
       }
       return super.onContextItemSelected(item);
+
     }
 
 }
