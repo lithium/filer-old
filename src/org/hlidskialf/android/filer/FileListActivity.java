@@ -330,7 +330,8 @@ public class FileListActivity extends ListActivity
     @Override
     public boolean onContextItemSelected(MenuItem item)
     {
-      String name = pCurFiles.get(item.getOrder());
+      AdapterContextMenuInfo info = (AdapterContextMenuInfo)item.getMenuInfo();
+      String name = pCurFiles.get(info.position);
 
       File f = new File(pCurDir, name);
 
