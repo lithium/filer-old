@@ -1,4 +1,4 @@
-package org.hlidskialf.filer;
+package org.hlidskialf.android.filer;
 
 import android.app.ListActivity;
 import android.widget.ListView;
@@ -275,6 +275,7 @@ public class FileListActivity extends ListActivity
     @Override
     public boolean onOptionsItemSelected(MenuItem item)
     {
+    /*
       switch (item.getId())
       {
         case R.options_menu_move:
@@ -291,6 +292,7 @@ public class FileListActivity extends ListActivity
         case R.options_menu_help:
           return true;
       }
+      */
       return false;
     }
 

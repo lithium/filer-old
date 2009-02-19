@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-      package="org.hlidskialf.filer"
+      package="org.hlidskialf.android.filer"
       android:versionCode="1"
       android:versionName="0.5.0">
 
