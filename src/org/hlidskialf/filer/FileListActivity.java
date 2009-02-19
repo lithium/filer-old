@@ -255,19 +255,43 @@ public class FileListActivity extends ListActivity
       super.onCreateOptionsMenu(menu);
       getMenuInflater().inflate(R.menu.options, menu);
 
-      MenuItem mipaste = menu.findItem(R.id.options_menu_paste);
+      MenuItem mimove = menu.findItem(R.id.options_menu_move);
+      MenuItem micopy = menu.findItem(R.id.options_menu_copy);
       MenuItem midelete = menu.findItem(R.id.options_menu_delete);
 
       if (pYanked == null) {
-        mipaste.setVisible(false);
+        mimove.setVisible(false);
+        micopy.setVisible(false);
         midelete.setVisible(false);
       }
       else {
-        mipaste.setTitle("Paste "+pYanked.getName()+" here");
+        mimove.setTitle("Move "+pYanked.getName()+" here");
+        micopy.setTitle("Copy "+pYanked.getName()+" here");
         midelete.setTitle("Delete "+pYanked.getName()+" forever");
       }
 
       return true;
+    }
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item)
+    {
+      switch (item.getId())
+      {
+        case R.options_menu_move:
+          return true;
+        case R.options_menu_copy:
+          return true;
+        case R.options_menu_delete:
+          return true;
+
+        case R.options_menu_newdir:
+          return true;
+        case R.options_menu_prefs:
+          return true;
+        case R.options_menu_help:
+          return true;
+      }
+      return false;
     }
 
     @Override
@@ -278,6 +302,7 @@ public class FileListActivity extends ListActivity
 
 
       if (pCreatingShortcut) {
+
         File f = new File(pCurDir, pCurFiles.get(info.position));
         create_shortcut(f);
         return;
@@ -303,6 +328,11 @@ public class FileListActivity extends ListActivity
       File f = new File(pCurDir, name);
 
       switch (item.getItemId()) {
+        case R.id.file_context_menu_open:
+          return true;
+        case R.id.file_context_menu_yank:
+          pYanked = f;
+          return true;
         case R.id.file_context_menu_rename:
           return true;
       }

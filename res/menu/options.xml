@@ -1,18 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-  <item android:id="@+id/options_menu_paste" 
-    android:icon="@drawable/paste" 
-    android:title="Paste"/>
+  <item android:id="@+id/options_menu_move" 
+    android:icon="@android:drawable/ic_menu_set_as" 
+    android:title="Move"/>
+  <item android:id="@+id/options_menu_copy" 
+    android:icon="@android:drawable/ic_menu_share" 
+    android:title="Copy"/>
   <item android:id="@+id/options_menu_delete" 
-    android:icon="@drawable/delete" 
+    android:icon="@android:drawable/ic_menu_delete" 
     android:title="Delete"/>
   <item android:id="@+id/options_menu_newdir" 
-    android:icon="@drawable/newdir" 
+    android:icon="@android:drawable/ic_menu_add" 
     android:title="New Directory"/>
   <item android:id="@+id/options_menu_prefs" 
-    android:icon="@drawable/preferences" 
+    android:icon="@android:drawable/ic_menu_preferences" 
     android:title="Preferences"/>
   <item android:id="@+id/options_menu_help" 
-    android:icon="@drawable/help" 
-    android:title="Help"/>
+    android:icon="@android:drawable/ic_menu_help" 
+    android:title="About"/>
 </menu>
