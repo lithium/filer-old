@@ -10,9 +10,10 @@ Handles Intents { action:RUN mimeType:text/directory }
 
 Options Menu
 ------------
-  New Directory
-  [Paste]
+  [Copy]
+  [Move]
   [Delete]
+  New Directory
   Preferences
   -----------
     Hide Dot Files      On
@@ -27,13 +28,11 @@ Options Menu
       png,gif,jpg,bmp   image/*
       mpg,wmv,mov,avi   video/*
       wav,mp3,wma       audio/*
-  About
+  Help
 
 
 Context Menu
 ------------
-  Open with
-  Cut
-  Copy 
+  Open as
+  Yank
   Rename
-  Info

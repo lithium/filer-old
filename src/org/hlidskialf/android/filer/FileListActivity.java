@@ -1,4 +1,4 @@
-package org.hlidskialf.filer;
+package org.hlidskialf.android.filer;
 
 import android.app.ListActivity;
 import android.widget.ListView;
@@ -118,25 +118,23 @@ public class FileListActivity extends ListActivity
 
       View empty = findViewById(R.id.empty);
 
-      ArrayList<String> files = new ArrayList<String>();
+      pCurFiles = new ArrayList<String>();
 
       String state = Environment.getExternalStorageState();
       if (Environment.MEDIA_MOUNTED.equals(state))  {
-        try {
-          if (!pCurDir.getCanonicalPath().equals(pRootFile.getCanonicalPath()))
-            files.add("..");
-        } catch (Exception e) {}
-        files.addAll(Arrays.asList(pCurDir.list()));
+        String[] ls = pCurDir.list();
+        int i;
+        for (i=0; i < ls.length; i++) {
+          if (!ls[i].startsWith(".")) pCurFiles.add(ls[i]);
+        }
         empty.setVisibility(View.INVISIBLE);
       }
       else {
         empty.setVisibility(View.VISIBLE);
       }
 
-      Collections.sort(files, new Comparator() {
+      Collections.sort(pCurFiles, new Comparator() {
         public int compare(Object a, Object b) {
-          if (((String)a).equals("..")) return -1;
-          if (((String)b).equals("..")) return 1;
           File fa = new File(pCurDir, (String)a); 
           File fb = new File(pCurDir, (String)b); 
           if (fa.isDirectory()) {
@@ -149,9 +147,13 @@ public class FileListActivity extends ListActivity
           return 0;
         }
       });
-      pCurFiles = files;
 
-      ArrayAdapter<String> file_adapter = new ArrayAdapter(this, R.layout.file_list_item, pCurFiles) {
+      try {
+        if (!pCurDir.getCanonicalPath().equals(pRootFile.getCanonicalPath()))
+          pCurFiles.add(0,"..");
+      } catch (Exception e) {}
+
+      final ArrayAdapter<String> file_adapter = new ArrayAdapter(this, R.layout.file_list_item, pCurFiles) {
         public View getView(int position, View v, ViewGroup parent)
         {
           String name = (String)pCurFiles.get(position);
@@ -161,10 +163,14 @@ public class FileListActivity extends ListActivity
           TextView txt = (TextView)ret.findViewById(R.id.row_text);
           txt.setText(name);
 
+          ImageView img = (ImageView)ret.findViewById(R.id.row_icon);
           File f = new File(pCurDir, name);
 
+          if (name.equals("..")) {
+            img.setImageResource(android.R.drawable.ic_menu_revert);
+          }
+          else
           if (f.isDirectory()) {
-            ImageView img = (ImageView)ret.findViewById(R.id.row_icon);
             img.setImageResource(android.R.drawable.ic_menu_more);
 
           }
@@ -183,6 +189,7 @@ public class FileListActivity extends ListActivity
 
         }
       };
+
   
       setListAdapter(file_adapter);
     }
@@ -255,19 +262,43 @@ public class FileListActivity extends ListActivity
       super.onCreateOptionsMenu(menu);
       getMenuInflater().inflate(R.menu.options, menu);
 
-      MenuItem mipaste = menu.findItem(R.id.options_menu_paste);
+      MenuItem mimove = menu.findItem(R.id.options_menu_move);
+      MenuItem micopy = menu.findItem(R.id.options_menu_copy);
       MenuItem midelete = menu.findItem(R.id.options_menu_delete);
 
       if (pYanked == null) {
-        mipaste.setVisible(false);
+        mimove.setVisible(false);
+        micopy.setVisible(false);
         midelete.setVisible(false);
       }
       else {
-        mipaste.setTitle("Paste "+pYanked.getName()+" here");
+        mimove.setTitle("Move "+pYanked.getName()+" here");
+        micopy.setTitle("Copy "+pYanked.getName()+" here");
         midelete.setTitle("Delete "+pYanked.getName()+" forever");
       }
 
       return true;
+    }
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item)
+    {
+      switch (item.getItemId())
+      {
+        case R.id.options_menu_move:
+          return true;
+        case R.id.options_menu_copy:
+          return true;
+        case R.id.options_menu_delete:
+          return true;
+
+        case R.id.options_menu_newdir:
+          return true;
+        case R.id.options_menu_prefs:
+          return true;
+        case R.id.options_menu_help:
+          return true;
+      }
+      return false;
     }
 
     @Override
@@ -278,6 +309,7 @@ public class FileListActivity extends ListActivity
 
 
       if (pCreatingShortcut) {
+
         File f = new File(pCurDir, pCurFiles.get(info.position));
         create_shortcut(f);
         return;
@@ -298,11 +330,17 @@ public class FileListActivity extends ListActivity
     @Override
     public boolean onContextItemSelected(MenuItem item)
     {
-      String name = pCurFiles.get(item.getOrder());
+      AdapterContextMenuInfo info = (AdapterContextMenuInfo)item.getMenuInfo();
+      String name = pCurFiles.get(info.position);
 
       File f = new File(pCurDir, name);
 
       switch (item.getItemId()) {
+        case R.id.file_context_menu_open:
+          return true;
+        case R.id.file_context_menu_yank:
+          pYanked = f;
+          return true;
         case R.id.file_context_menu_rename:
           return true;
       }

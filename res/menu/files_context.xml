@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
   <item android:id="@+id/file_context_menu_open" android:title="Open as..."/>
-  <item android:id="@+id/file_context_menu_cut" android:title="Cut / Delete"/>
-  <item android:id="@+id/file_context_menu_copy" android:title="Copy"/>
+  <item android:id="@+id/file_context_menu_yank" android:title="Yank"/>
   <item android:id="@+id/file_context_menu_rename" android:title="Rename"/>
 </menu>
