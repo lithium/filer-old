@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+  <CheckBoxPreference 
+    android:key="hide_dot_files"
+    android:title="Hide dot files"
+    android:summary="Hide files starting with a ."
+    android:defaultValue="true"
+  />
+  <CheckBoxPreference
+    android:key="back_cdup"
+    android:title="Back button cd .." 
+    android:summary="Back button will change to parent directory"
+    android:defaultValue="false"
+  />
+  <CheckBoxPreference
+    android:key="browse_root"
+    android:title="Enable device browsing"
+    android:summary="Allows you view files on device"
+    android:defaultValue="true"
+  />
+  <EditTextPreference
+    android:key="home_dir"
+    android:title="Home directory"
+    android:summary="Directory to start at"
+    android:defaultValue="/sdcard"
+  />
+</PreferenceScreen>
+

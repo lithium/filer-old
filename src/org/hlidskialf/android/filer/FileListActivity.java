@@ -17,6 +17,9 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.net.Uri;
 
+import android.preference.PreferenceManager;
+import android.content.SharedPreferences;
+
 import java.util.GregorianCalendar;
 import java.util.Calendar;
 import java.util.Date;
@@ -52,7 +55,7 @@ public class FileListActivity extends ListActivity
     private File pCurDir;
     private List<String> pCurFiles;
     private File pYanked = null;
-    private final File pRootFile = new File(Environment.getExternalStorageDirectory().toString());
+    private File pRootFile;
     private boolean pIgnoreNextClick = false;
     private boolean pCreatingShortcut = false;
 
@@ -72,7 +75,9 @@ public class FileListActivity extends ListActivity
         t.show();
       }
 
-      pCurDir = pRootFile;
+      String path = Environment.getExternalStorageDirectory().toString();
+      pRootFile = new File(path);
+      pCurDir = new File(getStringPref("home_dir",path));
 
       Uri uri = i.getData();
       if (uri != null) {
@@ -108,6 +113,14 @@ public class FileListActivity extends ListActivity
       unregisterReceiver(pReceiver);
     }
 
+    private boolean getBooleanPref(String key, boolean defValue)
+    {
+      return (PreferenceManager.getDefaultSharedPreferences(this)).getBoolean(key,defValue);
+    }
+    private String getStringPref(String key, String defValue)
+    {
+      return (PreferenceManager.getDefaultSharedPreferences(this)).getString(key,defValue);
+    }
 
     private void fillData(File new_dir)
     {
@@ -122,10 +135,14 @@ public class FileListActivity extends ListActivity
 
       String state = Environment.getExternalStorageState();
       if (Environment.MEDIA_MOUNTED.equals(state))  {
+        boolean do_hide = getBooleanPref("hide_dot_files",true);
+
         String[] ls = pCurDir.list();
         int i;
         for (i=0; i < ls.length; i++) {
-          if (!ls[i].startsWith(".")) pCurFiles.add(ls[i]);
+          if (ls[i].startsWith(".") && do_hide)
+            continue;
+          pCurFiles.add(ls[i]);
         }
         empty.setVisibility(View.INVISIBLE);
       }
@@ -149,7 +166,8 @@ public class FileListActivity extends ListActivity
       });
 
       try {
-        if (!pCurDir.getCanonicalPath().equals(pRootFile.getCanonicalPath()))
+        boolean browse_root = getBooleanPref("browse_root",false);
+        if (!pCurDir.getCanonicalPath().equals(pRootFile.getCanonicalPath()) || browse_root)
           pCurFiles.add(0,"..");
       } catch (Exception e) {}
 
@@ -294,6 +312,10 @@ public class FileListActivity extends ListActivity
         case R.id.options_menu_newdir:
           return true;
         case R.id.options_menu_prefs:
+            Intent i = new Intent(this, FilerPreferencesActivity.class);
+            i.setAction(Intent.ACTION_MAIN);
+            i.addCategory(Intent.CATEGORY_PREFERENCE);
+            startActivity(i);
           return true;
         case R.id.options_menu_help:
           return true;
@@ -318,7 +340,7 @@ public class FileListActivity extends ListActivity
 
         if (pCurFiles.get(info.position).equals("..")) {
           pIgnoreNextClick = true;
-          fillData(pRootFile);
+          fillData(new File(getStringPref("home_dir",Environment.getExternalStorageDirectory().toString())));
           return;
         }
         getMenuInflater().inflate(R.menu.files_context, menu);
