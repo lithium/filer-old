@@ -1,4 +1,4 @@
-package org.hlidskialf.android.filer;
+package com.hlidskialf.android.filer;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;

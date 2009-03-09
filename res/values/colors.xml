@@ -1,0 +1,4 @@
+<resources>
+    <drawable name="file_list_item_normal">#FF191919</drawable>
+    <drawable name="file_list_item_yanked">#FFFF1919</drawable>
+</resources>

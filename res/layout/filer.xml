@@ -1,22 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout 
+<RelativeLayout 
   xmlns:android="http://schemas.android.com/apk/res/android"
   android:orientation="vertical"
   android:layout_width="fill_parent"
   android:layout_height="fill_parent"
   >
 
-  <ListView 
-    android:id="@id/android:list"
-    android:layout_width="fill_parent"
-    android:layout_height="wrap_content"
-    android:choiceMode="multipleChoice"
-  />
-
   <TextView 
     android:id="@+id/empty"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:text="No external storage"/>
+
+
+  <LinearLayout android:id="@+id/yank_bar"
+    android:layout_width="fill_parent" android:layout_height="wrap_content"
+    android:layout_alignParentBottom="true"
+    android:visibility="gone"
+    >
+    <Button android:id="@+id/yank_bar_buffer"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="@string/yank_buffer" />
+
+    <Button android:id="@+id/yank_bar_copy"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="@string/copy" />
+
+    <Button android:id="@+id/yank_bar_move"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="@string/move" />
+
+    <Button android:id="@+id/yank_bar_delete"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="@string/delete" />
+  </LinearLayout>
+
       
-</LinearLayout>
+  <ListView 
+    android:id="@id/android:list"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:choiceMode="multipleChoice"
+    android:layout_above="@id/yank_bar"
+  />
+</RelativeLayout>

@@ -1,28 +1,70 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-  <CheckBoxPreference 
-    android:key="hide_dot_files"
-    android:title="Hide dot files"
-    android:summary="Hide files starting with a ."
+  <PreferenceCategory android:title="@string/app_preferences" />
+  <CheckBoxPreference android:key="hide_dot_files"
+    android:title="@string/hide_dot_files"
+    android:summary="@string/hide_dot_files_summary"
     android:defaultValue="true"
   />
-  <CheckBoxPreference
-    android:key="back_cdup"
-    android:title="Back button cd .." 
-    android:summary="Back button will change to parent directory"
+  <CheckBoxPreference android:key="back_cdup"
+    android:title="@string/back_cdup"
+    android:summary="@string/back_cdup_summary"
     android:defaultValue="false"
   />
-  <CheckBoxPreference
-    android:key="browse_root"
-    android:title="Enable device browsing"
-    android:summary="Allows you view files on device"
-    android:defaultValue="true"
+  <CheckBoxPreference android:key="browse_root"
+    android:title="@string/browse_root"
+    android:summary="@string/browse_root_summary"
+    android:defaultValue="false"
   />
-  <EditTextPreference
-    android:key="home_dir"
-    android:title="Home directory"
-    android:summary="Directory to start at"
+  <EditTextPreference android:key="home_dir"
+    android:title="@string/home_directory"
+    android:summary="@string/home_directory_summary"
     android:defaultValue="/sdcard"
+  />
+  <PreferenceScreen 
+    android:title="@string/mimes"
+    android:summary="@string/mimes_summary"
+    >
+    <PreferenceCategory android:title="@string/mimes"/>
+    <EditTextPreference android:key="default_mimetype"
+      android:title="@string/default_mime"
+      android:summary="@string/default_mime_summary"
+      android:defaultValue="text/*"
+      />
+    <com.hlidskialf.android.filer.MimePreference android:key="mimes"
+      android:title="@string/mime_ext"
+      android:summary="@string/mime_ext_summary"
+      android:dialogLayout="@layout/mimes"
+    />
+  </PreferenceScreen>
+  <PreferenceScreen 
+    android:title="@string/confirms"
+    android:summary="@string/confirms_summary"
+    >
+    <PreferenceCategory android:title="@string/confirms"/>
+    <CheckBoxPreference android:key="confirm_copy"
+        android:title="@string/confirm_copy"
+        android:summary="@string/confirm_copy_summary"
+        android:defaultValue="true"/>
+    <CheckBoxPreference android:key="confirm_move"
+        android:title="@string/confirm_move"
+        android:summary="@string/confirm_move_summary"
+        android:defaultValue="true"/>
+    <CheckBoxPreference android:key="confirm_delete"
+        android:title="@string/confirm_delete"
+        android:summary="@string/confirm_delete_summary"
+        android:defaultValue="true"/>
+    <CheckBoxPreference android:key="recursive_delete"
+        android:title="@string/recursive_delete"
+        android:summary="@string/recursive_delete_summary"
+        android:defaultValue="true"/>
+  </PreferenceScreen>
+
+  <DialogPreference android:key="about"
+    android:title="@string/about"
+    android:summary="@string/about_title"
+    android:dialogTitle="@string/about_title"
+    android:dialogLayout="@layout/about"
   />
 </PreferenceScreen>
 
