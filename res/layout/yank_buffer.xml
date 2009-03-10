@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout 
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:orientation="vertical"
+  android:layout_width="fill_parent"
+  android:layout_height="fill_parent"
+  >
+  <LinearLayout android:id="@+id/button_bar"
+    android:layout_width="fill_parent" android:layout_height="wrap_content"
+    android:layout_alignParentBottom="true"
+    >
+    <Button android:id="@+id/button_ok"
+      android:text="@string/ok"
+      android:layout_width="0dip" android:layout_height="wrap_content"
+      android:layout_weight="1"
+      />
+    <Button android:id="@+id/button_unyank"
+      android:text="@string/unyank"
+      android:layout_width="0dip" android:layout_height="wrap_content"
+      android:layout_weight="1"
+      />
+  </LinearLayout>
+  <ScrollView 
+    android:layout_width="fill_parent" android:layout_height="fill_parent"
+    android:layout_above="@id/button_bar"
+    >
+    <TextView android:id="@+id/yank_buffer_contents"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      />
+  </ScrollView>
+</RelativeLayout>

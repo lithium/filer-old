@@ -2,12 +2,14 @@ package com.hlidskialf.android.filer;
 
 import android.app.ListActivity;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.widget.ListView;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
+import android.widget.Button;
 import android.view.View;
 import android.view.Menu;
 import android.view.LayoutInflater;
@@ -58,6 +60,7 @@ public class Filer extends ListActivity
       public void onReceive(Context context, Intent intent) { fillData(mCurDir); }
     };
 
+      
     private File mCurDir;
     private List<String> mCurFiles;
     private ArrayList<String> mYanked = new ArrayList();
@@ -66,7 +69,7 @@ public class Filer extends ListActivity
     private boolean pIgnoreNextClick = false;
     private boolean mCreatingShortcut = false;
 
-    //private MenuItem mYankBufferItem;
+    private MenuItem mCopyItem,mMoveItem,mUnyankItem,mDeleteItem;
     private SharedPreferences mPrefs;
 
     private Hashtable<String,String> mMimeExt;
@@ -104,6 +107,39 @@ public class Filer extends ListActivity
           finish();
         }
       }
+
+      Button b = (Button)findViewById(R.id.yank_bar_buffer);
+      b.setOnClickListener(new Button.OnClickListener() {
+          public void onClick(View v) {
+            final Dialog dialog = new Dialog(Filer.this);
+            View layout = getLayoutInflater().inflate(R.layout.yank_buffer, null);
+            TextView tv;
+            Button b;
+
+            tv = (TextView) layout.findViewById(R.id.yank_buffer_contents);
+            if (tv != null)
+            tv.setText(build_yank_buffer_contents());
+
+            b = (Button)layout.findViewById(R.id.button_unyank);
+            if (b != null) 
+            b.setOnClickListener( new Button.OnClickListener() {
+              public void onClick(View v) { 
+                unyank_all(); 
+                dialog.dismiss();
+              }
+            });
+
+            b = (Button)layout.findViewById(R.id.button_ok);
+            if (b != null) 
+            b.setOnClickListener( new Button.OnClickListener() {
+              public void onClick(View v) { dialog.dismiss(); }
+            });
+
+            dialog.setContentView(layout);
+            dialog.setTitle(R.string.yank_buffer_title);
+            dialog.show();
+          }
+      });
       
 
       registerForContextMenu(getListView());  
@@ -189,10 +225,16 @@ public class Filer extends ListActivity
       getMenuInflater().inflate(R.menu.options, menu);
 
       //mYankBufferItem = menu.findItem(R.id.options_menu_yank_buffer);
+      mCopyItem = menu.findItem(R.id.options_menu_copy);
+      mMoveItem = menu.findItem(R.id.options_menu_move);
+      mUnyankItem = menu.findItem(R.id.options_menu_unyank);
+      //mDeleteItem = menu.findItem(R.id.options_menu_delete);
 
-      //if ((mYanked != null) && (mYanked.size() < 1)) {
-        //mYankBufferItem.setVisible(false);
-      //}
+      boolean vis = ((mYanked != null) && (mYanked.size() > 0)); 
+      mCopyItem.setVisible(vis);
+      mMoveItem.setVisible(vis);
+      mUnyankItem.setVisible(vis);
+      //mDeleteItem.setVisible(vis);
 
       return true;
     }
@@ -201,6 +243,9 @@ public class Filer extends ListActivity
     {
       switch (item.getItemId())
       {
+        case R.id.options_menu_unyank:
+          unyank_all();
+          return true;
         case R.id.options_menu_newdir:
           return true;
         case R.id.options_menu_prefs:
@@ -444,12 +489,13 @@ public class Filer extends ListActivity
     {
       View yank_bar = findViewById(R.id.yank_bar);
       if (mYanked == null) return;
-      if (yank_bar != null) {
-        yank_bar.setVisibility((mYanked.size() > 0) ? View.VISIBLE : View.GONE);
-      }
-      //if (mYankBufferItem != null) {
-        //mYankBufferItem.setVisible((mYanked.size() > 0) ? true : false);
-      //} 
+      boolean vis = (mYanked.size() > 0);
+      if (yank_bar != null) yank_bar.setVisibility(vis ? View.VISIBLE : View.GONE);
+
+      if (mCopyItem != null) mCopyItem.setVisible(vis);
+      if (mMoveItem != null) mMoveItem.setVisible(vis);
+      if (mUnyankItem != null) mUnyankItem.setVisible(vis);
+      //if (mDeleteItem != null) mDeleteItem.setVisible(vis);
 
     }
     private String getMimetype(String filename)
@@ -460,4 +506,46 @@ public class Filer extends ListActivity
       String mime = mMimeExt.get(ext);
       return mime;
     }
+    private void unyank_all()
+    {
+      mYanked.clear();
+      updateYankBarVisibility();
+    }
+    private String build_yank_buffer_contents()
+    {
+
+      if (mYanked == null) return "";
+      int len = mYanked.size();
+      int i;
+      StringBuilder sb = new StringBuilder();
+      for (i=0; i < len; i++) {
+        String path = (String)mYanked.get(i);
+        if (path == null) continue;
+        File f = new File(path);
+        if (f == null) continue;
+
+        sb.append(path);
+        if (f.isDirectory()) {
+          sb.append("/\n");
+          sb = build_yank_buffer_contents_append_dir(sb, f,1);
+        }
+        sb.append("\n");
+      }
+
+      return sb.toString();
+    }
+    private static StringBuilder build_yank_buffer_contents_append_dir(StringBuilder sb, File dir, int level) {
+      String[] files = dir.list();
+      int i;
+      for (i=0; i < files.length; i++) {
+        int l;
+        for (l=0; l < level; l++) sb.append("    ");
+        sb.append("|- ").append(files[i]) .append("\n") ;
+        File f = new File(dir, files[i]);
+        if (f.isDirectory()) {
+          sb = build_yank_buffer_contents_append_dir(sb, f, level+1);
+        }
+      }
+      return sb;
+    };
 }

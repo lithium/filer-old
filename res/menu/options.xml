@@ -1,14 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-<!--
-  <item android:id="@+id/options_menu_move" 
-    android:icon="@android:drawable/ic_menu_set_as" 
-    android:title="@string/move"/>
+  <item android:id="@+id/options_menu_unyank" 
+    android:icon="@android:drawable/ic_menu_close_clear_cancel" 
+    android:visible="false"
+    android:title="@string/unyank_all"/>
   <item android:id="@+id/options_menu_copy" 
     android:icon="@android:drawable/ic_menu_share" 
-    android:title="@string/copy"/>
+    android:visible="false"
+    android:title="@string/copy_here"/>
+  <item android:id="@+id/options_menu_move" 
+    android:icon="@android:drawable/ic_menu_set_as" 
+    android:visible="false"
+    android:title="@string/move_here"/>
+<!--
   <item android:id="@+id/options_menu_delete" 
     android:icon="@android:drawable/ic_menu_delete" 
+    android:visible="false"
     android:title="@string/delete"/>
   <item android:id="@+id/options_menu_yank_buffer" 
     android:icon="@android:drawable/ic_menu_sort_by_size" 

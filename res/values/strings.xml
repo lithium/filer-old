@@ -8,6 +8,7 @@
     <string name="preferences">Preferences</string>
     <string name="yank">Select</string>
     <string name="unyank">Un-Select</string>
+    <string name="unyank_all">Unselect All</string>
     <string name="open_as">Open as ...</string>
     <string name="rename">Rename</string>
     <string name="new_directory">New Directory</string>
@@ -28,10 +29,14 @@
     <string name="mimetype">Mimetype</string>
     <string name="extension">Extension</string>
 
-    <string name="yank_buffer">View Selected Files</string>
+    <string name="yank_buffer_title">Currently Selected Files</string>
+    <string name="yank_buffer">View\nFiles</string>
     <string name="copy">Copy</string>
     <string name="move">Move</string>
     <string name="delete">Delete</string>
+    <string name="delete_all">Delete\nFiles</string>
+    <string name="copy_here">Copy\nHere</string>
+    <string name="move_here">Move\nHere</string>
 
     <string name="hide_dot_files">Hide Dot Files</string>
     <string name="hide_dot_files_summary">Hide files starting with a .(period)</string>
