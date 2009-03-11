@@ -77,6 +77,8 @@
     <string name="newdir_pass">Created directory &lt;%s&gt;</string>
     <string name="newdir_fail">Could not create &lt;%s&gt;</string>
 
+    <string name="shortcut_name_title">Shortcut Name</string>
+    <string name="shortcut_name_splash">What name for &lt;%s&gt; shortcut?</string>
 
     <string name="file_exists">File already exists</string>
 </resources>

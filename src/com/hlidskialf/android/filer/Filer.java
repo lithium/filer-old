@@ -349,7 +349,7 @@ public class Filer extends ListActivity
                 fillData(mCurDir);
                 Toast.makeText(Filer.this, msg, Toast.LENGTH_SHORT).show();
               }
-          }).show();
+          }).setNegativeButton(R.string.cancel, null).show();
           return true;
         case R.id.file_context_menu_delete:
           return true;
@@ -515,12 +515,22 @@ public class Filer extends ListActivity
       Intent i = new Intent(action);
       i.setDataAndType(Uri.fromFile(f), type);
 
-      Intent short_i = new Intent();
+      String name = f.getName();
+      final Intent short_i = new Intent();
       short_i.putExtra(Intent.EXTRA_SHORTCUT_INTENT, i);
-      short_i.putExtra(Intent.EXTRA_SHORTCUT_NAME, f.getName());
+      short_i.putExtra(Intent.EXTRA_SHORTCUT_NAME, name);
       short_i.putExtra(Intent.EXTRA_SHORTCUT_ICON_RESOURCE, icon);
-      setResult(RESULT_OK, short_i);
-      finish();
+
+      textentry_builder(R.string.shortcut_name_title, getString(R.string.shortcut_name_splash,name), name, 
+        new textentry_listener() {
+          public void onOk(String new_name) {
+            short_i.putExtra(Intent.EXTRA_SHORTCUT_NAME, new_name);
+
+            setResult(RESULT_OK, short_i);
+            finish();
+          }
+      }).show();
+
     }
 
     private void updateYankBarVisibility()
@@ -608,7 +618,6 @@ public class Filer extends ListActivity
                 listener.onOk(te_text.getText().toString());
             }
         })
-        .setNegativeButton(R.string.cancel, null)
         ;
     }
 }
