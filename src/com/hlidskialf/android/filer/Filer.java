@@ -52,7 +52,7 @@ public class Filer extends ListActivity
 {
     private static final int RESULT_PREFERENCES=1;
 
-    private final DecimalFormat pNumFmt  = new DecimalFormat();
+    private final DecimalFormat pNumFmt  = new DecimalFormat("0.#");
     private final SimpleDateFormat pDateFmt_time = new SimpleDateFormat("MMM dd HH:mm");
     private final SimpleDateFormat pDateFmt_year  = new SimpleDateFormat("MMM dd yyyy");
  
@@ -444,9 +444,9 @@ public class Filer extends ListActivity
     private String format_size(long size)
     {
       String ret;
-      if (size > 1024*1024*1024) ret = pNumFmt.format(size / 1024*1024*1024) + "G";
-      else if (size > 1024*1024) ret = pNumFmt.format(size / 1024*1024) + "M";
-      else if (size > 1024) ret = pNumFmt.format(size / 1024) + "k";
+      if (size > 1024*1024*1024) ret = pNumFmt.format((double)size / (double)(1024*1024*1024)) + "G";
+      else if (size > 1024*1024) ret = pNumFmt.format((double)size / (double)(1024*1024)) + "M";
+      else if (size > 1024) ret = pNumFmt.format((double)size / (double)1024) + "k";
       else ret = pNumFmt.format(size) + "b";
       return ret;
     }
