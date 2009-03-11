@@ -11,6 +11,7 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 import android.widget.Button;
 import android.view.View;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
@@ -54,24 +55,25 @@ public class Filer extends ListActivity
     private final DecimalFormat pNumFmt  = new DecimalFormat();
     private final SimpleDateFormat pDateFmt_time = new SimpleDateFormat("MMM dd HH:mm");
     private final SimpleDateFormat pDateFmt_year  = new SimpleDateFormat("MMM dd yyyy");
-  
-    private BroadcastReceiver pReceiver = new BroadcastReceiver() {
+ 
+    /* broadcast receiver to check for sd card status */
+    private BroadcastReceiver mReceiver = new BroadcastReceiver() {
       @Override
       public void onReceive(Context context, Intent intent) { fillData(mCurDir); }
     };
 
-      
-    private File mCurDir;
+    private File mCurDir,mStartDir,mRootFile;
     private List<String> mCurFiles;
     private ArrayList<String> mYanked = new ArrayList();
 
-    private File mRootFile;
     private boolean pIgnoreNextClick = false;
     private boolean mCreatingShortcut = false;
 
     private MenuItem mCopyItem,mMoveItem,mUnyankItem,mDeleteItem;
-    private SharedPreferences mPrefs;
 
+    private SharedPreferences mPrefs;
+    private File mHomeFile;
+    private boolean mBrowseRoot,mHideDot,mBackCd;
     private Hashtable<String,String> mMimeExt;
 
     @Override
@@ -80,34 +82,39 @@ public class Filer extends ListActivity
       super.onCreate(savedInstanceState);
       setContentView(R.layout.filer);
 
-      Intent i = getIntent();
+      Intent intent = getIntent();
 
-      mCreatingShortcut = Intent.ACTION_CREATE_SHORTCUT.equals(i.getAction());
+      mCreatingShortcut = Intent.ACTION_CREATE_SHORTCUT.equals(intent.getAction());
 
       if (mCreatingShortcut) {
         Toast t = Toast.makeText(this, "Longclick to create a shortcut", Toast.LENGTH_LONG);
         t.show();
       }
-     
+
+      String root_path = Environment.getExternalStorageDirectory().toString();
+      mRootFile = new File(root_path);
+
       mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
-
       mMimeExt = MimePreference.mimesFromString( mPrefs.getString("mimes", MimePreference.DEFAULT_MIME_DATA) );
+      mHomeFile = new File(mPrefs.getString("home_dir",root_path));
+      mBrowseRoot = mPrefs.getBoolean("browse_root", false);
+      mHideDot = mPrefs.getBoolean("hide_dot_files", false);
+      mBackCd = mPrefs.getBoolean("back_cd_up", true);
 
-      String path = Environment.getExternalStorageDirectory().toString();
-      mRootFile = new File(path);
-      mCurDir = new File(mPrefs.getString("home_dir",path));
-
-      Uri uri = i.getData();
+      Uri uri = intent.getData();
       if (uri != null) {
         File f = new File(uri.getPath());
         if (f.isDirectory())
           mCurDir = f;
-        else { // file viewer
-          Log.v("Filer", "view file");
-          finish();
-        }
+      }
+      else {
+        mCurDir = mHomeFile;
       }
 
+      mStartDir = mCurDir;
+
+
+      /* set up the view files dialog */
       Button b = (Button)findViewById(R.id.yank_bar_buffer);
       b.setOnClickListener(new Button.OnClickListener() {
           public void onClick(View v) {
@@ -154,8 +161,8 @@ public class Filer extends ListActivity
       filt.addAction(Intent.ACTION_MEDIA_UNMOUNTED);
       filt.addAction(Intent.ACTION_MEDIA_MOUNTED);
       filt.addDataScheme("file");
-      registerReceiver(pReceiver, filt);
-
+      registerReceiver(mReceiver, filt);
+          
       fillData(mCurDir);
 
       updateYankBarVisibility();
@@ -164,7 +171,7 @@ public class Filer extends ListActivity
     public void onPause()
     {
       super.onPause();
-      unregisterReceiver(pReceiver);
+      unregisterReceiver(mReceiver);
     }
 
     @Override
@@ -184,7 +191,8 @@ public class Filer extends ListActivity
     @Override
     protected void onListItemClick(ListView l, View v, int position, long id) 
     {
-      if (pIgnoreNextClick) {
+      if (pIgnoreNextClick) { 
+        // hack used for overriding context click on ..
         pIgnoreNextClick = false;
         return;
       }
@@ -197,25 +205,21 @@ public class Filer extends ListActivity
 
       if (f.isDirectory()) {
         fillData(f);
+        return;
       }
-      else {
-        if (mCreatingShortcut) {
-          create_shortcut(f);
-        }
-        else {
 
-          try {
-            Intent i = new Intent(Intent.ACTION_VIEW);
-
-            i.setDataAndType(Uri.fromFile(f), mime);
-            startActivity(i);
-          } catch (android.content.ActivityNotFoundException ex) { 
-            Toast t = Toast.makeText(this, "No activity not found.", Toast.LENGTH_SHORT);
-            t.show();
-          }
-
-        }
+      if (mCreatingShortcut) {
+        create_shortcut(f);
+        return;
       }
+
+      try {
+        startActivity(new Intent(Intent.ACTION_VIEW).setDataAndType(Uri.fromFile(f), mime));
+      } catch (android.content.ActivityNotFoundException ex) { 
+        Toast t = Toast.makeText(this, "No activity not found.", Toast.LENGTH_SHORT);
+        t.show();
+      }
+
     }
 
     @Override
@@ -249,8 +253,7 @@ public class Filer extends ListActivity
         case R.id.options_menu_newdir:
           return true;
         case R.id.options_menu_prefs:
-            Intent i = new Intent(this, FilerPreferencesActivity.class);
-            startActivityForResult(i, RESULT_PREFERENCES);
+            startActivityForResult(new Intent(this, FilerPreferencesActivity.class), RESULT_PREFERENCES);
           return true;
         case R.id.options_menu_help:
           new AlertDialog.Builder(this)
@@ -278,7 +281,7 @@ public class Filer extends ListActivity
 
       if (mCurFiles.get(info.position).equals("..")) {
         pIgnoreNextClick = true;
-        fillData(new File(mPrefs.getString("home_dir",Environment.getExternalStorageDirectory().toString())));
+        fillData(mHomeFile);
         return;
       }
 
@@ -286,12 +289,10 @@ public class Filer extends ListActivity
 
       MenuItem unyankItem = menu.findItem(R.id.file_context_menu_unyank);
       MenuItem yankItem = menu.findItem(R.id.file_context_menu_yank);
-      if (mYanked.contains(f.getPath()) && unyankItem != null && yankItem != null) {
-        yankItem.setVisible(false);
-        unyankItem.setVisible(true);
-      } else {
-        yankItem.setVisible(true);
-        unyankItem.setVisible(false);
+      if (unyankItem != null && yankItem != null) {
+        boolean vis = mYanked.contains(f.getPath());
+        unyankItem.setVisible(vis);
+        yankItem.setVisible(!vis);
       }
 
     }
@@ -301,22 +302,21 @@ public class Filer extends ListActivity
     {
       AdapterContextMenuInfo info = (AdapterContextMenuInfo)item.getMenuInfo();
       String name = mCurFiles.get(info.position);
-
       File f = new File(mCurDir, name);
       View v = info.targetView;
-      if (f == null) return true;
+      if (f == null || v == null) return true;
 
       switch (item.getItemId()) {
         case R.id.file_context_menu_open:
           return true;
         case R.id.file_context_menu_yank:
           mYanked.add(f.getPath());
-          if (v != null) v.setBackgroundResource(R.drawable.file_list_item_yanked);
+          v.setBackgroundResource(R.drawable.file_list_item_yanked);
           updateYankBarVisibility();
           return true;
         case R.id.file_context_menu_unyank:
           mYanked.remove(f.getPath());
-          if (v != null) v.setBackgroundResource(R.drawable.file_list_item_normal);
+          v.setBackgroundResource(R.drawable.file_list_item_normal);
           updateYankBarVisibility();
           return true;
         case R.id.file_context_menu_rename:
@@ -327,7 +327,16 @@ public class Filer extends ListActivity
       return super.onContextItemSelected(item);
 
     }
-
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+      if(mBackCd && (keyCode == KeyEvent.KEYCODE_BACK)) {
+        if (! mCurDir.getPath().equals(mStartDir.getPath())) {
+          fillData(mCurDir.getParentFile());
+          return true;
+        }
+      }
+      return super.onKeyDown(keyCode, event);
+    }
+    
 
 
 
@@ -339,7 +348,9 @@ public class Filer extends ListActivity
       try {
         mCurDir = new File(new_dir.getCanonicalPath());
         setTitle(mCurDir.getPath());
-      } catch (Exception e) {}
+      } catch (Exception e) {
+        return;
+      }
 
       View empty = findViewById(R.id.empty);
 
@@ -348,11 +359,9 @@ public class Filer extends ListActivity
       String state = Environment.getExternalStorageState();
       String[] ls = mCurDir.list();
       if (Environment.MEDIA_MOUNTED.equals(state) && ls != null)  {
-        boolean do_hide = mPrefs.getBoolean("hide_dot_files",true);
-
         int i;
         for (i=0; i < ls.length; i++) {
-          if (ls[i].startsWith(".") && do_hide)
+          if (ls[i].startsWith(".") && mHideDot)
             continue;
           mCurFiles.add(ls[i]);
         }
@@ -366,6 +375,7 @@ public class Filer extends ListActivity
         public int compare(Object a, Object b) {
           File fa = new File(mCurDir, (String)a); 
           File fb = new File(mCurDir, (String)b); 
+          if (fa == null || fb == null) return 0;
           if (fa.isDirectory()) {
             if (fb.isDirectory()) 
               return fa.getName().compareTo( fb.getName() );
@@ -377,11 +387,8 @@ public class Filer extends ListActivity
         }
       });
 
-      try {
-        boolean browse_root = mPrefs.getBoolean("browse_root",false);
-        if (!mCurDir.getCanonicalPath().equals(mRootFile.getCanonicalPath()) || browse_root)
-          mCurFiles.add(0,"..");
-      } catch (Exception e) {}
+      if (!mCurDir.getPath().equals(mRootFile.getPath()) || mBrowseRoot)
+        mCurFiles.add(0,"..");
 
       final ArrayAdapter<String> file_adapter = new ArrayAdapter(this, R.layout.file_list_item, mCurFiles) {
         public View getView(int position, View v, ViewGroup parent)
