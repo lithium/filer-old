@@ -81,4 +81,6 @@
     <string name="shortcut_name_splash">What name for &lt;%s&gt; shortcut?</string>
 
     <string name="file_exists">File already exists</string>
+
+    <string name="shortcut_toast">Longclick to create a shortcut</string>
 </resources>

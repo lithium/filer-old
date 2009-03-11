@@ -48,6 +48,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 
+
+
+
+
 public class Filer extends ListActivity 
 {
     private static final int RESULT_PREFERENCES=1;
@@ -59,7 +63,10 @@ public class Filer extends ListActivity
     /* broadcast receiver to check for sd card status */
     private BroadcastReceiver mReceiver = new BroadcastReceiver() {
       @Override
-      public void onReceive(Context context, Intent intent) { fillData(mCurDir); }
+      public void onReceive(Context context, Intent intent) { 
+        //fillData(mCurDir); 
+        updateEmptyVisibility();
+      }
     };
 
     private File mCurDir,mStartDir,mRootFile;
@@ -69,12 +76,15 @@ public class Filer extends ListActivity
     private boolean pIgnoreNextClick = false;
     private boolean mCreatingShortcut = false;
 
+    private SdcardSystem mSystem_sdcard;
+
     private MenuItem mCopyItem,mMoveItem,mUnyankItem,mDeleteItem;
 
     private SharedPreferences mPrefs;
     private File mHomeFile;
     private boolean mBrowseRoot,mHideDot,mBackCd;
     private Hashtable<String,String> mMimeExt;
+    private String mDefaultMime;
 
     @Override
     public void onCreate(Bundle savedInstanceState)
@@ -87,25 +97,27 @@ public class Filer extends ListActivity
       mCreatingShortcut = Intent.ACTION_CREATE_SHORTCUT.equals(intent.getAction());
 
       if (mCreatingShortcut) {
-        Toast t = Toast.makeText(this, "Longclick to create a shortcut", Toast.LENGTH_LONG);
+        Toast t = Toast.makeText(this, R.string.shortcut_toast, Toast.LENGTH_LONG);
         t.show();
       }
 
-      String root_path = Environment.getExternalStorageDirectory().toString();
-      mRootFile = new File(root_path);
+      String sdcard_path = Environment.getExternalStorageDirectory().toString();
 
       mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
       mMimeExt = MimePreference.mimesFromString( mPrefs.getString("mimes", MimePreference.DEFAULT_MIME_DATA) );
-      mHomeFile = new File(mPrefs.getString("home_dir",root_path));
       mBrowseRoot = mPrefs.getBoolean("browse_root", false);
+      mRootFile = new File(mBrowseRoot ? "/" : sdcard_path);
+      mHomeFile = new File(mPrefs.getString("home_dir",sdcard_path));
       mHideDot = mPrefs.getBoolean("hide_dot_files", false);
       mBackCd = mPrefs.getBoolean("back_cd_up", true);
+      mDefaultMime = mPrefs.getString("default_mimetype", "text/*");
 
       Uri uri = intent.getData();
       if (uri != null) {
         File f = new File(uri.getPath());
         if (f.isDirectory())
           mCurDir = f;
+
       }
       else {
         mCurDir = mHomeFile;
@@ -113,8 +125,11 @@ public class Filer extends ListActivity
 
       mStartDir = mCurDir;
 
+      mSystem_sdcard = new SdcardSystem(mRootFile.getPath());
 
-      /* set up the view files dialog */
+
+
+      /* set up the yank buffer dialog */
       Button b = (Button)findViewById(R.id.yank_bar_buffer);
       b.setOnClickListener(new Button.OnClickListener() {
           public void onClick(View v) {
@@ -163,8 +178,9 @@ public class Filer extends ListActivity
       filt.addDataScheme("file");
       registerReceiver(mReceiver, filt);
           
-      fillData(mCurDir);
-
+      //fillData(mCurDir);
+      setListAdapter( new FilerAdapter(this, mSystem_sdcard) );
+      updateEmptyVisibility();
       updateYankBarVisibility();
     }
     @Override
@@ -185,7 +201,7 @@ public class Filer extends ListActivity
     {
       super.onRestoreInstanceState(inState);
       mYanked =  inState.getStringArrayList("mYanked");
-      fillData(new File(inState.getString("cur_dir")));
+      //fillData(new File(inState.getString("cur_dir")));
     }
 
     @Override
@@ -204,7 +220,7 @@ public class Filer extends ListActivity
       File f = new File(mCurDir, name);
 
       if (f.isDirectory()) {
-        fillData(f);
+        //fillData(f);
         return;
       }
 
@@ -262,7 +278,7 @@ public class Filer extends ListActivity
                 else {
                   msg = newdir.mkdir() ? getString(R.string.newdir_pass, new_name) : getString(R.string.newdir_fail); 
                 }
-                fillData(mCurDir);
+                //fillData(mCurDir);
                 Toast.makeText(Filer.this, msg, Toast.LENGTH_SHORT).show();
               }
             }).show();
@@ -296,7 +312,7 @@ public class Filer extends ListActivity
 
       if (mCurFiles.get(info.position).equals("..")) {
         pIgnoreNextClick = true;
-        fillData(mHomeFile);
+        //fillData(mHomeFile);
         return;
       }
 
@@ -346,7 +362,7 @@ public class Filer extends ListActivity
                 else {
                   msg = f.renameTo(newfile) ? getString(R.string.rename_pass,name,new_name) : getString(R.string.rename_fail);
                 }
-                fillData(mCurDir);
+                //fillData(mCurDir);
                 Toast.makeText(Filer.this, msg, Toast.LENGTH_SHORT).show();
               }
           }).setNegativeButton(R.string.cancel, null).show();
@@ -361,7 +377,7 @@ public class Filer extends ListActivity
     public boolean onKeyDown(int keyCode, KeyEvent event) {
       if(mBackCd && (keyCode == KeyEvent.KEYCODE_BACK)) {
         if (! mCurDir.getPath().equals(mStartDir.getPath())) {
-          fillData(mCurDir.getParentFile());
+          //fillData(mCurDir.getParentFile());
           return true;
         }
       }
@@ -388,6 +404,7 @@ public class Filer extends ListActivity
       mCurFiles = new ArrayList<String>();
 
       String state = Environment.getExternalStorageState();
+
       String[] ls = mCurDir.list();
       if (Environment.MEDIA_MOUNTED.equals(state) && ls != null)  {
         int i;
@@ -401,6 +418,7 @@ public class Filer extends ListActivity
       else {
         empty.setVisibility(View.VISIBLE);
       }
+
 
       Collections.sort(mCurFiles, new Comparator() {
         public int compare(Object a, Object b) {
@@ -471,7 +489,6 @@ public class Filer extends ListActivity
 
 
 
-
     private String format_size(long size)
     {
       String ret;
@@ -533,6 +550,12 @@ public class Filer extends ListActivity
 
     }
 
+    private void updateEmptyVisibility()
+    {
+        View empty = findViewById(R.id.empty);
+        String state = Environment.getExternalStorageState();
+        empty.setVisibility(Environment.MEDIA_MOUNTED.equals(state) ? View.GONE : View.VISIBLE);
+    }
     private void updateYankBarVisibility()
     {
       View yank_bar = findViewById(R.id.yank_bar);
