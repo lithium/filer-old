@@ -251,6 +251,21 @@ public class Filer extends ListActivity
           unyank_all();
           return true;
         case R.id.options_menu_newdir:
+          textentry_builder(R.string.newdir_title, getString(R.string.newdir_splash), null, 
+            new textentry_listener() {
+              public void onOk(String new_name) {
+                File newdir = new File(mCurDir, new_name);
+                String msg;
+                if (newdir.exists()) {
+                  msg = getString(R.string.file_exists);
+                }
+                else {
+                  msg = newdir.mkdir() ? getString(R.string.newdir_pass, new_name) : getString(R.string.newdir_fail); 
+                }
+                fillData(mCurDir);
+                Toast.makeText(Filer.this, msg, Toast.LENGTH_SHORT).show();
+              }
+            }).show();
           return true;
         case R.id.options_menu_prefs:
             startActivityForResult(new Intent(this, FilerPreferencesActivity.class), RESULT_PREFERENCES);
@@ -320,14 +335,19 @@ public class Filer extends ListActivity
           updateYankBarVisibility();
           return true;
         case R.id.file_context_menu_rename:
-          textentry_builder(getString(R.string.rename_title), getString(R.string.rename_splash,name), name, 
+          textentry_builder(R.string.rename_title, getString(R.string.rename_splash,name), name, 
             new textentry_listener() {
               public void onOk(String new_name) {
-                f.renameTo(new File(mCurDir, new_name));
-                mCurFiles.set(info_pos, new_name);
-                getListView().invalidateViews();
-                Toast.makeText(Filer.this, getString(R.string.renamed_to,name,new_name), Toast.LENGTH_SHORT)
-                  .show();
+                File newfile = new File(mCurDir, new_name);
+                String msg;
+                if (newfile.exists()) {
+                  msg = getString(R.string.file_exists);
+                }
+                else {
+                  msg = f.renameTo(newfile) ? getString(R.string.rename_pass,name,new_name) : getString(R.string.rename_fail);
+                }
+                fillData(mCurDir);
+                Toast.makeText(Filer.this, msg, Toast.LENGTH_SHORT).show();
               }
           }).show();
           return true;
@@ -571,7 +591,7 @@ public class Filer extends ListActivity
     private interface textentry_listener {
       public void onOk(String new_value);
     }
-    private AlertDialog.Builder textentry_builder(String title, String splash, String initial, textentry_listener ok_listener)
+    private AlertDialog.Builder textentry_builder(int title, String splash, String initial, textentry_listener ok_listener)
     {
       View textentry = getLayoutInflater().inflate(R.layout.textentry_dialog,null);
       TextView tv = (TextView)textentry.findViewById(R.id.textentry_splash);
