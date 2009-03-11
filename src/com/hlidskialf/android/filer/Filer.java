@@ -320,44 +320,16 @@ public class Filer extends ListActivity
           updateYankBarVisibility();
           return true;
         case R.id.file_context_menu_rename:
-
-            textentry_builder(getString(rename_title), getString(R.string.rename_splash,name), name, 
-              new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int which) {
-                  EditText text = findViewById(R.id.textentry_text);
-                  if (text == null) return;
-                  String new_name = text.getText().toString();
-                  f.renameTo(new File(mCurDir, new_name));
-                  mCurFiles.set(info_pos, new_name);
-                  getListView().invalidateViews();
-                  Toast.makeText(Filer.this, getString(R.string.renamed_to,name,new_name), Toast.LENGTH_SHORT)
-                    .show();
-                }
-            }).show();
-
-            /*
-            View textentry = getLayoutInflater().inflate(R.layout.textentry_dialog,null);
-            TextView tv = (TextView)textentry.findViewById(R.id.textentry_splash);
-            if (tv != null) tv.setText(getString(R.string.rename_splash,name));
-            final TextView te_text = (TextView)textentry.findViewById(R.id.textentry_text);
-            if (te_text != null) te_text.setText(name);
-            new AlertDialog.Builder(this)
-              .setTitle(R.string.rename_title)
-              .setView(textentry)
-              .setPositiveButton(R.string.rename, 
-                new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int which) {
-                  if (te_text == null) return;
-                  String new_name = te_text.getText().toString();
-                  f.renameTo(new File(mCurDir, new_name));
-                  mCurFiles.set(info_pos, new_name);
-                  getListView().invalidateViews();
-                  Toast.makeText(Filer.this, getString(R.string.renamed_to,name,new_name), Toast.LENGTH_SHORT)
-                    .show();
-                }
-              })
-            .show();
-            */
+          textentry_builder(getString(R.string.rename_title), getString(R.string.rename_splash,name), name, 
+            new textentry_listener() {
+              public void onOk(String new_name) {
+                f.renameTo(new File(mCurDir, new_name));
+                mCurFiles.set(info_pos, new_name);
+                getListView().invalidateViews();
+                Toast.makeText(Filer.this, getString(R.string.renamed_to,name,new_name), Toast.LENGTH_SHORT)
+                  .show();
+              }
+          }).show();
           return true;
         case R.id.file_context_menu_delete:
           return true;
@@ -595,17 +567,28 @@ public class Filer extends ListActivity
       return sb;
     };
 
-    private AlertDialog.Builder textentry_builder(String title, String splash, String initial, DialogInterface.OnClickListener onclick)
+
+    private interface textentry_listener {
+      public void onOk(String new_value);
+    }
+    private AlertDialog.Builder textentry_builder(String title, String splash, String initial, textentry_listener ok_listener)
     {
       View textentry = getLayoutInflater().inflate(R.layout.textentry_dialog,null);
       TextView tv = (TextView)textentry.findViewById(R.id.textentry_splash);
       if (tv != null) tv.setText(splash);
-      TextView te_text = (TextView)textentry.findViewById(R.id.textentry_text);
+      final TextView te_text = (TextView)textentry.findViewById(R.id.textentry_text);
+      final textentry_listener listener = ok_listener;
       if (initial != null && te_text != null) te_text.setText(initial);
       return new AlertDialog.Builder(this)
         .setTitle(title)
         .setView(textentry)
-        .setPositiveButton(R.string.ok, onclick)
+        .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int which) {
+              if (listener != null)  
+                listener.onOk(te_text.getText().toString());
+            }
+        })
+        .setNegativeButton(R.string.cancel, null)
         ;
     }
 }
