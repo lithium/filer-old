@@ -20,7 +20,7 @@ import android.view.MenuItem;
 import android.os.Bundle;
 import android.os.Environment;
 import android.net.Uri;
-
+import android.content.DialogInterface;
 import android.preference.PreferenceManager;
 import android.content.SharedPreferences;
 
@@ -301,25 +301,44 @@ public class Filer extends ListActivity
     public boolean onContextItemSelected(MenuItem item)
     {
       AdapterContextMenuInfo info = (AdapterContextMenuInfo)item.getMenuInfo();
-      String name = mCurFiles.get(info.position);
-      File f = new File(mCurDir, name);
-      View v = info.targetView;
-      if (f == null || v == null) return true;
+      final int info_pos = info.position;
+      final String name = mCurFiles.get(info_pos);
+      final File f = new File(mCurDir, name);
+      if (f == null || info.targetView == null) return true;
 
       switch (item.getItemId()) {
         case R.id.file_context_menu_open:
           return true;
         case R.id.file_context_menu_yank:
           mYanked.add(f.getPath());
-          v.setBackgroundResource(R.drawable.file_list_item_yanked);
+          info.targetView.setBackgroundResource(R.drawable.file_list_item_yanked);
           updateYankBarVisibility();
           return true;
         case R.id.file_context_menu_unyank:
           mYanked.remove(f.getPath());
-          v.setBackgroundResource(R.drawable.file_list_item_normal);
+          info.targetView.setBackgroundResource(R.drawable.file_list_item_normal);
           updateYankBarVisibility();
           return true;
         case R.id.file_context_menu_rename:
+            View textentry = getLayoutInflater().inflate(R.layout.textentry_dialog,null);
+            TextView tv = (TextView)textentry.findViewById(R.id.textentry_splash);
+            if (tv != null) tv.setText(getString(R.string.rename_splash,name));
+            final TextView te_text = (TextView)textentry.findViewById(R.id.textentry_text);
+            te_text.setText(name);
+            new AlertDialog.Builder(this)
+              .setTitle(R.string.rename_title)
+              .setView(textentry)
+              .setPositiveButton(R.string.rename, new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int which) {
+                  String new_name = te_text.getText().toString();
+                  f.renameTo(new File(mCurDir, new_name));
+                  mCurFiles.set(info_pos, new_name);
+                  getListView().invalidateViews();
+                  Toast.makeText(Filer.this, getString(R.string.renamed_to,name,new_name), Toast.LENGTH_SHORT)
+                    .show();
+                }
+              })
+            .show();
           return true;
         case R.id.file_context_menu_delete:
           return true;

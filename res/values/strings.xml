@@ -65,4 +65,8 @@
     <string name="confirm_delete_summary">Prompt when delete files</string>
     <string name="recursive_delete">Allow recursive delete</string>
     <string name="recursive_delete_summary">Delete non-empty directories</string>
+
+    <string name="rename_title">Rename File</string>
+    <string name="rename_splash">Rename "%s" to what?</string>
+    <string name="renamed_to">"%s" renamed to "%s"</string>
 </resources>
