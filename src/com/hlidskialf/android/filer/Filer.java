@@ -320,16 +320,34 @@ public class Filer extends ListActivity
           updateYankBarVisibility();
           return true;
         case R.id.file_context_menu_rename:
+
+            textentry_builder(getString(rename_title), getString(R.string.rename_splash,name), name, 
+              new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int which) {
+                  EditText text = findViewById(R.id.textentry_text);
+                  if (text == null) return;
+                  String new_name = text.getText().toString();
+                  f.renameTo(new File(mCurDir, new_name));
+                  mCurFiles.set(info_pos, new_name);
+                  getListView().invalidateViews();
+                  Toast.makeText(Filer.this, getString(R.string.renamed_to,name,new_name), Toast.LENGTH_SHORT)
+                    .show();
+                }
+            }).show();
+
+            /*
             View textentry = getLayoutInflater().inflate(R.layout.textentry_dialog,null);
             TextView tv = (TextView)textentry.findViewById(R.id.textentry_splash);
             if (tv != null) tv.setText(getString(R.string.rename_splash,name));
             final TextView te_text = (TextView)textentry.findViewById(R.id.textentry_text);
-            te_text.setText(name);
+            if (te_text != null) te_text.setText(name);
             new AlertDialog.Builder(this)
               .setTitle(R.string.rename_title)
               .setView(textentry)
-              .setPositiveButton(R.string.rename, new DialogInterface.OnClickListener() {
+              .setPositiveButton(R.string.rename, 
+                new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int which) {
+                  if (te_text == null) return;
                   String new_name = te_text.getText().toString();
                   f.renameTo(new File(mCurDir, new_name));
                   mCurFiles.set(info_pos, new_name);
@@ -339,6 +357,7 @@ public class Filer extends ListActivity
                 }
               })
             .show();
+            */
           return true;
         case R.id.file_context_menu_delete:
           return true;
@@ -346,6 +365,7 @@ public class Filer extends ListActivity
       return super.onContextItemSelected(item);
 
     }
+
     public boolean onKeyDown(int keyCode, KeyEvent event) {
       if(mBackCd && (keyCode == KeyEvent.KEYCODE_BACK)) {
         if (! mCurDir.getPath().equals(mStartDir.getPath())) {
@@ -574,4 +594,18 @@ public class Filer extends ListActivity
       }
       return sb;
     };
+
+    private AlertDialog.Builder textentry_builder(String title, String splash, String initial, DialogInterface.OnClickListener onclick)
+    {
+      View textentry = getLayoutInflater().inflate(R.layout.textentry_dialog,null);
+      TextView tv = (TextView)textentry.findViewById(R.id.textentry_splash);
+      if (tv != null) tv.setText(splash);
+      TextView te_text = (TextView)textentry.findViewById(R.id.textentry_text);
+      if (initial != null && te_text != null) te_text.setText(initial);
+      return new AlertDialog.Builder(this)
+        .setTitle(title)
+        .setView(textentry)
+        .setPositiveButton(R.string.ok, onclick)
+        ;
+    }
 }
