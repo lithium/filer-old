@@ -56,9 +56,11 @@ public class Filer extends ListActivity
 {
     private static final int RESULT_PREFERENCES=1;
 
+    /*
     private final DecimalFormat pNumFmt  = new DecimalFormat("0.#");
     private final SimpleDateFormat pDateFmt_time = new SimpleDateFormat("MMM dd HH:mm");
     private final SimpleDateFormat pDateFmt_year  = new SimpleDateFormat("MMM dd yyyy");
+    */
  
     /* broadcast receiver to check for sd card status */
     private BroadcastReceiver mReceiver = new BroadcastReceiver() {
@@ -69,7 +71,7 @@ public class Filer extends ListActivity
       }
     };
 
-    private File mCurDir,mStartDir,mRootFile;
+    private String mCurPath,mStartPath,mRootPath,mHomePath;
     private List<String> mCurFiles;
     private ArrayList<String> mYanked = new ArrayList();
 
@@ -77,11 +79,11 @@ public class Filer extends ListActivity
     private boolean mCreatingShortcut = false;
 
     private SdcardSystem mSystem_sdcard;
+    private FilerAdapter mAdapter_sdcard;
 
     private MenuItem mCopyItem,mMoveItem,mUnyankItem,mDeleteItem;
 
     private SharedPreferences mPrefs;
-    private File mHomeFile;
     private boolean mBrowseRoot,mHideDot,mBackCd;
     private Hashtable<String,String> mMimeExt;
     private String mDefaultMime;
@@ -106,27 +108,53 @@ public class Filer extends ListActivity
       mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
       mMimeExt = MimePreference.mimesFromString( mPrefs.getString("mimes", MimePreference.DEFAULT_MIME_DATA) );
       mBrowseRoot = mPrefs.getBoolean("browse_root", false);
-      mRootFile = new File(mBrowseRoot ? "/" : sdcard_path);
-      mHomeFile = new File(mPrefs.getString("home_dir",sdcard_path));
+      mRootPath = mBrowseRoot ? "/" : sdcard_path;
+      mHomePath = mPrefs.getString("home_dir",mRootPath);
       mHideDot = mPrefs.getBoolean("hide_dot_files", false);
       mBackCd = mPrefs.getBoolean("back_cd_up", true);
       mDefaultMime = mPrefs.getString("default_mimetype", "text/*");
 
+
+
+      mSystem_sdcard = new SdcardSystem(mRootPath);
+      mAdapter_sdcard = new FilerAdapter(this, mSystem_sdcard, 
+          new FilerSystem.FilerFilter() {
+            public boolean accept(FilerSystem sys, String path) {
+              return mHideDot ? !(sys.getName(path).startsWith(".")) : true;
+            }
+          },
+          new FilerSystem.FilerComparator() {
+            public int compare(FilerSystem sys, String a, String b) {
+              if (a == null || b == null || !sys.exists(a) || !sys.exists(b)) return 0;
+              if (sys.isDirectory(a)) {
+                if (sys.isDirectory(b)) 
+                  return sys.getName(a).compareTo( sys.getName(b) );
+                return -1;
+              }
+              if (sys.isDirectory(b)) 
+                return 1;
+              return 0;
+            }
+          }
+      );
+
+
+      if (mHomePath.startsWith(sdcard_path))
+        mHomePath = mHomePath.substring(sdcard_path.length());
+      mStartPath = mHomePath;
+
       Uri uri = intent.getData();
       if (uri != null) {
-        File f = new File(uri.getPath());
+        String path = uri.getPath();
+        File f = new File(path);
         if (f.isDirectory())
-          mCurDir = f;
+          mStartPath = path;
 
+        if (mStartPath.startsWith(sdcard_path))
+          mStartPath = mStartPath.substring(sdcard_path.length());
       }
-      else {
-        mCurDir = mHomeFile;
-      }
 
-      mStartDir = mCurDir;
-
-      mSystem_sdcard = new SdcardSystem(mRootFile.getPath());
-
+      Log.v("startpath",mStartPath);
 
 
       /* set up the yank buffer dialog */
@@ -179,7 +207,9 @@ public class Filer extends ListActivity
       registerReceiver(mReceiver, filt);
           
       //fillData(mCurDir);
-      setListAdapter( new FilerAdapter(this, mSystem_sdcard) );
+      setListAdapter(mAdapter_sdcard);
+      mAdapter_sdcard.chdir(mStartPath);
+      updateListViews();
       updateEmptyVisibility();
       updateYankBarVisibility();
     }
@@ -195,7 +225,7 @@ public class Filer extends ListActivity
     {
       super.onSaveInstanceState(outState);
       outState.putStringArrayList("mYanked", mYanked);
-      outState.putString("cur_dir", mCurDir.getPath());
+      outState.putString("mCurPath", mCurPath);
     }
     public void onRestoreInstanceState(Bundle inState)
     {
@@ -214,23 +244,26 @@ public class Filer extends ListActivity
       }
       super.onListItemClick(l,v,position,id);
 
-      String name = (String)mCurFiles.get(position);
+      String path = mAdapter_sdcard.getItem(position);
+      String name = mSystem_sdcard.getName(path);
       String mime = getMimetype(name);
 
-      File f = new File(mCurDir, name);
-
-      if (f.isDirectory()) {
-        //fillData(f);
+      if (mSystem_sdcard.isDirectory(path)) {
+        if (name.equals("..")) 
+          mAdapter_sdcard.cdup();
+        else
+          mAdapter_sdcard.cdto(name);
+        updateListViews();
         return;
       }
 
       if (mCreatingShortcut) {
-        create_shortcut(f);
+        create_shortcut(new File( mSystem_sdcard.getPath(path) ));
         return;
       }
 
       try {
-        startActivity(new Intent(Intent.ACTION_VIEW).setDataAndType(Uri.fromFile(f), mime));
+        startActivity(new Intent(Intent.ACTION_VIEW).setDataAndType(mSystem_sdcard.getUri(path), mime));
       } catch (android.content.ActivityNotFoundException ex) { 
         Toast t = Toast.makeText(this, "No activity not found.", Toast.LENGTH_SHORT);
         t.show();
@@ -266,6 +299,7 @@ public class Filer extends ListActivity
         case R.id.options_menu_unyank:
           unyank_all();
           return true;
+          /*
         case R.id.options_menu_newdir:
           textentry_builder(R.string.newdir_title, getString(R.string.newdir_splash), null, 
             new textentry_listener() {
@@ -283,6 +317,7 @@ public class Filer extends ListActivity
               }
             }).show();
           return true;
+          */
         case R.id.options_menu_prefs:
             startActivityForResult(new Intent(this, FilerPreferencesActivity.class), RESULT_PREFERENCES);
           return true;
@@ -303,16 +338,19 @@ public class Filer extends ListActivity
       super.onCreateContextMenu(menu, v, menuInfo);
       AdapterContextMenuInfo info = (AdapterContextMenuInfo)menuInfo;
 
-      File f = new File(mCurDir, mCurFiles.get(info.position));
+
+      String path = mAdapter_sdcard.getItem(info.position);
 
       if (mCreatingShortcut) {
-        create_shortcut(f);
+        create_shortcut(new File( mSystem_sdcard.getPath(path) ));
         return;
       } 
 
-      if (mCurFiles.get(info.position).equals("..")) {
+      if (path.equals("..")) {
         pIgnoreNextClick = true;
         //fillData(mHomeFile);
+        mAdapter_sdcard.chdir(mHomePath);
+        updateListViews();
         return;
       }
 
@@ -321,7 +359,7 @@ public class Filer extends ListActivity
       MenuItem unyankItem = menu.findItem(R.id.file_context_menu_unyank);
       MenuItem yankItem = menu.findItem(R.id.file_context_menu_yank);
       if (unyankItem != null && yankItem != null) {
-        boolean vis = mYanked.contains(f.getPath());
+        boolean vis = mYanked.contains(path);
         unyankItem.setVisible(vis);
         yankItem.setVisible(!vis);
       }
@@ -333,23 +371,25 @@ public class Filer extends ListActivity
     {
       AdapterContextMenuInfo info = (AdapterContextMenuInfo)item.getMenuInfo();
       final int info_pos = info.position;
-      final String name = mCurFiles.get(info_pos);
-      final File f = new File(mCurDir, name);
-      if (f == null || info.targetView == null) return true;
+      String path = mAdapter_sdcard.getItem(info_pos);
+      //final String name = mCurFiles.get(info_pos);
+      //final File f = new File(mCurDir, name);
+      //if (f == null || info.targetView == null) return true;
 
       switch (item.getItemId()) {
         case R.id.file_context_menu_open:
           return true;
         case R.id.file_context_menu_yank:
-          mYanked.add(f.getPath());
+          mYanked.add(path);
           info.targetView.setBackgroundResource(R.drawable.file_list_item_yanked);
           updateYankBarVisibility();
           return true;
         case R.id.file_context_menu_unyank:
-          mYanked.remove(f.getPath());
+          mYanked.remove(path);
           info.targetView.setBackgroundResource(R.drawable.file_list_item_normal);
           updateYankBarVisibility();
           return true;
+          /*
         case R.id.file_context_menu_rename:
           textentry_builder(R.string.rename_title, getString(R.string.rename_splash,name), name, 
             new textentry_listener() {
@@ -367,6 +407,7 @@ public class Filer extends ListActivity
               }
           }).setNegativeButton(R.string.cancel, null).show();
           return true;
+          */
         case R.id.file_context_menu_delete:
           return true;
       }
@@ -376,8 +417,9 @@ public class Filer extends ListActivity
 
     public boolean onKeyDown(int keyCode, KeyEvent event) {
       if(mBackCd && (keyCode == KeyEvent.KEYCODE_BACK)) {
-        if (! mCurDir.getPath().equals(mStartDir.getPath())) {
-          //fillData(mCurDir.getParentFile());
+        if (mCurPath != null && !mCurPath.equals(mStartPath)) {
+          mAdapter_sdcard.cdup();
+          updateListViews();
           return true;
         }
       }
@@ -389,7 +431,7 @@ public class Filer extends ListActivity
 
 
 
-
+/*
     private void fillData(File new_dir)
     {
       try {
@@ -510,6 +552,7 @@ public class Filer extends ListActivity
       else
         return pDateFmt_year.format(last);
     }
+*/
 
     private void create_shortcut(File f)
     {
@@ -550,6 +593,12 @@ public class Filer extends ListActivity
 
     }
 
+    private void updateListViews()
+    {
+      ListView lv = getListView();
+      if (lv != null) lv.invalidateViews();
+      mCurPath = mAdapter_sdcard.pwd();
+    }
     private void updateEmptyVisibility()
     {
         View empty = findViewById(R.id.empty);

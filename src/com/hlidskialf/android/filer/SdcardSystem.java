@@ -1,13 +1,16 @@
 package com.hlidskialf.android.filer;
 
+import android.net.Uri;
 import java.io.File;
 
 class SdcardSystem extends FilerSystem {
   private File mFile;
   private String mRootPath;
 
+  public static String separator = java.io.File.separator;
+
   private File make_file(String path) {
-    return new File(path == null ? mRootPath : mRootPath + File.pathSeparator + path);
+    return new File(path == null ? mRootPath : mRootPath + separator + path);
   }
 
   public SdcardSystem(String root_path) {
@@ -15,7 +18,7 @@ class SdcardSystem extends FilerSystem {
   }
 
   public String[] list(String path) {
-    File f = make_file(path);
+    File f = make_file(path); 
     return f == null ? null : f.list();
   }
   public boolean delete(String path) {
@@ -48,13 +51,19 @@ class SdcardSystem extends FilerSystem {
     return f == null ? null : f.isDirectory();
   }
   public String getName(String path) {
-    int idx = path.lastIndexOf(java.io.File.pathSeparator);
+    int idx = path.lastIndexOf(separator);
     return path.substring(idx+1);
   }
   public String getParent(String path) {
     File f = make_file(path);
     return f == null ? null : f.getParent();
   }
+  public String getPath(String path) {
+    return path == null ? mRootPath : mRootPath + separator + path;
+  }
 
+  public Uri getUri(String path) {
+    return Uri.parse("file://"+ mRootPath + (path == null ? "" : path));
+  }
 }
 

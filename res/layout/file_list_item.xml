@@ -19,7 +19,7 @@
     android:paddingTop="6sp"
     android:paddingRight="4sp"
   />
-  <RelativeLayout
+  <RelativeLayout android:id="@+id/row_detail"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
     android:layout_alignParentBottom="true">
